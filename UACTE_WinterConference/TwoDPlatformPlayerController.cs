@@ -58,8 +58,8 @@ public class TwoDPlatformPlayerController : MonoBehaviour
     public float jumpSpeed = 5f;
 
     public string GroundLayerName = "Ground";
-    public string PlatformMaskLayerName = "Platform";
-    public string LadderLayerName = "Ladder";
+    public string PlatformMaskLayerName = "Platforms";
+    public string LadderLayerName = "Ladders";
     public string WallLayerName = "Walls";
     public string AttackAnimationTrigger = "Attack";
     public string JumpingAnimationParam = "IsJumping";
@@ -75,7 +75,6 @@ public class TwoDPlatformPlayerController : MonoBehaviour
     Collider2D closestClimableLader = null;
     bool isAttacking = true;
     bool isOnLadder = false;
-    public string TagOfFixedGround = "FixedGround";//any objects with this tag will not have its colliders changed to trigger colliders if the player is not above it.
     enum speed { fast, slow }
     speed movespeed = TwoDPlatformPlayerController.speed.slow;
     bool isClimbing = false;
@@ -114,6 +113,7 @@ public class TwoDPlatformPlayerController : MonoBehaviour
             return;
         }
         groundMaskLayer = LayerMask.GetMask(GroundLayerName);
+        platformMaskLayer = LayerMask.GetMask(PlatformMaskLayerName);
         ladderMaskLayer = LayerMask.GetMask(LadderLayerName);
         wallMaskLayer = LayerMask.GetMask(WallLayerName);
 
@@ -396,7 +396,7 @@ public class TwoDPlatformPlayerController : MonoBehaviour
             anim.SetBool(MovingAnimationParam, true);
 
         //run the jumping animation if necessary
-        if (hasJumpingAnimation && (Input.GetAxisRaw("Jump") == 0 && anim.GetBool(JumpingAnimationParam) || grounded || isOnLadder))
+        if (hasJumpingAnimation && ((Input.GetAxisRaw("Jump") == 0 && anim.GetBool(JumpingAnimationParam) && grounded) || grounded || isOnLadder))
             anim.SetBool(JumpingAnimationParam, false);
         else if (hasJumpingAnimation && (Input.GetAxisRaw("Jump") != 0 && !anim.GetBool(JumpingAnimationParam) || (!grounded && !isOnLadder)))
             anim.SetBool(JumpingAnimationParam, true);
@@ -496,7 +496,7 @@ public class TwoDPlatformPlayerController : MonoBehaviour
         foreach (Collider2D coll in colliders)
         {
             //check to see if the collider is in the ground layer and if we are touching it.
-            if (coll != null && coll.gameObject != this.gameObject && 1 << coll.gameObject.layer == groundMaskLayer.value && (!hasTagOfFixedGround || !coll.gameObject.CompareTag(TagOfFixedGround)))
+            if (coll != null && coll.gameObject != this.gameObject && 1 << coll.gameObject.layer == platformMaskLayer.value)
             {
                 //Debug.Log(coll.gameObject.name + ":" + (coll.bounds.extents.y + coll.bounds.center.y).ToString());
                 //are we above it, and are we over it
@@ -602,7 +602,7 @@ public class TwoDPlatformPlayerController : MonoBehaviour
         foreach (Collider2D coll in colliders)
         {
             //check toi see if the collider is in the ground layer and if we are touching it.
-            if (coll != null && coll.gameObject != this.gameObject && 1 << coll.gameObject.layer == groundMaskLayer.value)
+            if (coll != null && coll.gameObject != this.gameObject && ((1 << coll.gameObject.layer == groundMaskLayer.value) || (1 << coll.gameObject.layer == platformMaskLayer.value)))
             {
                 foreach (Collider2D playerCollider in playerColliders)
                     if (coll.IsTouching(playerCollider) && coll.isTrigger == false)
